@@ -112,7 +112,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _handleLogin() async {
-    final isLoggedIn = await _authService.login(
+    final isLoggedIn = await _authService.login(context,
       widget.userType,
       _usernameController.text,
       _passwordController.text,

@@ -1,44 +1,113 @@
-//import 'package:http/http.dart' as http;
-
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:qabas/screens/admin/admin_dashboard_page.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:qabas/screens/teacher/teacher_dashboard_page.dart'; 
+import 'package:qabas/screens/parent/parent_dashboard_page.dart'; 
+import 'package:qabas/screens/student/student_dashboard_page.dart'; // You'll need to create this
 class AuthService {
-  Future<bool> login(String userType, String username, String password) async {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<bool> login(BuildContext context, String userType, String username, String password) async {
+  try {
     switch (userType) {
       case 'كإداري':
-        return username == 'admin' && password == 'admin';
+        if (username == 'admin' && password == 'admin') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => AdminDashboardPage()),
+          );
+          return true;
+        }
+        break;
+        
       case 'كمعلم':
-        return username == 'teacher' && password == 'teacher';
+        var teacherQuery = await _firestore
+            .collection('users')
+            .where('username', isEqualTo: username)
+            .where('password', isEqualTo: password)
+            .where('role', isEqualTo: 'teacher')
+            .get();
+
+        if (teacherQuery.docs.isNotEmpty) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TeacherDashboardPage(
+                teacherId: teacherQuery.docs.first.id,
+                teacherData: teacherQuery.docs.first.data(),
+              ),
+            ),
+          );
+          return true;
+        }
+        break;
+
       case 'كولي أمر':
-        return username == 'parent' && password == 'parent';
+        var parentQuery = await _firestore
+            .collection('users')
+            .where('parentUsername', isEqualTo: username)
+            .where('parentPassword', isEqualTo: password)
+            .get();
+
+        if (parentQuery.docs.isNotEmpty) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ParentDashboardPage(
+                parentUsername: username,
+                parentData: parentQuery.docs.first.data(),
+              ),
+            ),
+          );
+          return true;
+        }
+        break;
+
       case 'كطالب':
-        return username == 'student' && password == 'student';
-      default:
+        var studentQuery = await _firestore
+            .collection('users')
+            .where('username', isEqualTo: username)
+            .where('password', isEqualTo: password)
+            .where('role', isEqualTo: 'student')
+            .get();
+
+        if (studentQuery.docs.isNotEmpty) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StudentDashboardPage(
+                studentId: studentQuery.docs.first.id,
+                studentData: studentQuery.docs.first.data(),
+              ),
+            ),
+          );
+          return true;
+        }
+        break;
+    }
+    return false;
+  } catch (e) {
+    print("Error during login: $e");
+    return false;
+  }
+  }
+
+  Future<bool> testFirestoreConnection() async {
+    try {
+      var connectivityResult = await (Connectivity().checkConnectivity());
+      if (connectivityResult == ConnectivityResult.none) {
+        print("No internet connection");
         return false;
+      }
+
+      await _firestore.collection('users').limit(1).get()
+          .timeout(Duration(seconds: 5));
+      print("Successfully connected to Firestore");
+      return true;
+    } catch (e) {
+      print("Error connecting to Firestore: $e");
+      return false;
     }
   }
 }
-//   // Use this URL when running on an Android emulator
-//   static const String baseUrl = 'http://192.168.56.1:8080';
-  
-//   // Use this URL when running on Windows or web
-//   // static const String baseUrl = 'http://localhost:8080';
-
-//   Future<bool> loginAdmin(String username, String password) async {
-//     // try {
-//     //   final response = await http.post(
-//     //     Uri.parse('$baseUrl/login'),
-//     //     body: {
-//     //       'username': username,
-//     //       'password': password,
-//     //     },
-//     //   );
-
-//     //   print('Response status: ${response.statusCode}');
-//     //   print('Response body: ${response.body}');
-
-//     //   return response.statusCode == 200 && response.body == 'Login successful';
-//     // } catch (e) {
-//     //   print('Error during login: $e');
-//     //   return false;
-//         return username == 'admin' && password == 'admin';
-//     }
-// }
