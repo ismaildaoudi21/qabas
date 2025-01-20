@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "46021388829",
+    "project_id": "qabas-c1608",
+    "storage_bucket": "qabas-c1608.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:46021388829:android:2c207d870601ceb46c34f4",
+        "android_client_info": {
+          "package_name": "com.example.qabas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAz5JsrECPwYSljWDWx3KaqIamZLOWj8Zc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
