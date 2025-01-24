@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qabas/screens/parent/parentNotificationsPage/notifications_page.dart';
 import 'package:qabas/utils/app_colors.dart';
 
 class ParentDashboardPage extends StatelessWidget {
@@ -63,7 +64,15 @@ class ParentDashboardPage extends StatelessWidget {
                       Icons.notifications,
                       'الإشعارات',
                       Colors.purple,
-                      () {},
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const ParentNotificationsPage(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -74,7 +83,8 @@ class ParentDashboardPage extends StatelessWidget {
       ),
     );
   }
-Widget _buildLogo() {
+
+  Widget _buildLogo() {
     return Container(
       width: 50,
       height: 50,
@@ -88,7 +98,8 @@ Widget _buildLogo() {
     );
   }
 
-  Widget _buildDashboardItem(IconData icon, String label, Color color, VoidCallback onTap) {
+  Widget _buildDashboardItem(
+      IconData icon, String label, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -119,5 +130,5 @@ Widget _buildLogo() {
       ),
     );
   }
-  // Same _buildLogo and _buildDashboardItem methods as StudentDashboardPage
+// Same _buildLogo and _buildDashboardItem methods as StudentDashboardPage
 }
