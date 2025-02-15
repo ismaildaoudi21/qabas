@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:qabas/utils/app_colors.dart';
 import 'package:qabas/screens/teacher/wird/teacher_wird_management.dart';
 import 'package:qabas/screens/teacher/attendance/attendance_page.dart';
-import 'package:qabas/screens/teacher/assessments/assessments_page.dart';
+import 'package:qabas/screens/teacher/students/student_assessments_page.dart';
 import 'package:qabas/screens/teacher/wird/teacher_wird_page.dart';
 import 'package:qabas/screens/teacher/students/students_page.dart';
 import 'package:qabas/screens/teacher/notifications/notifications_page.dart';
@@ -39,26 +39,6 @@ class TeacherDashboardPage extends StatelessWidget {
         context,
         MaterialPageRoute(
           builder: (context) => AttendancePage(
-            teacherId: teacherId,
-            halaqahId: halaqah.id,
-            halaqahName: (halaqah.data() as Map<String, dynamic>)['name'] ?? '',
-          ),
-        ),
-      );
-    } else if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('لا توجد حلقات مسندة إليك')),
-      );
-    }
-  }
-
-  Future<void> _navigateToAssessments(BuildContext context) async {
-    DocumentSnapshot? halaqah = await _getFirstHalaqah();
-    if (halaqah != null && context.mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => AssessmentsPage(
             teacherId: teacherId,
             halaqahId: halaqah.id,
             halaqahName: (halaqah.data() as Map<String, dynamic>)['name'] ?? '',
@@ -158,7 +138,14 @@ class TeacherDashboardPage extends StatelessWidget {
                       Icons.assessment, 
                       'التقييمات', 
                       Colors.orange, 
-                      () => _navigateToAssessments(context),
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => StudentAssessmentsPage(
+                            teacherId: teacherId,
+                          ),
+                        ),
+                      ),
                     ),
                     _buildDashboardItem(
                       Icons.notifications, 

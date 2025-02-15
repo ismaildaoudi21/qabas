@@ -6,7 +6,18 @@ class AppTheme {
     return ThemeData(
       fontFamily: 'Tajwal',
       primaryColor: AppColors.orange1,
-      // Add more theme configurations here
+      textTheme: const TextTheme().apply(
+        fontFamily: 'Tajwal',
+        bodyColor: Colors.black87,
+        displayColor: Colors.black87,
+      ),
+      appBarTheme: const AppBarTheme(
+        titleTextStyle: TextStyle(
+          fontFamily: 'Tajwal',
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }

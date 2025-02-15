@@ -103,6 +103,10 @@ flutter:
         - asset: fonts/ArbFONTS-Tajawal-Regular.ttf
         - asset: fonts/ArbFONTS-Tajawal-Medium.ttf
           weight: 500
+        - asset: fonts/ArbFONTS-Tajawal-Bold.ttf
+          weight: 700
+        - asset: fonts/ArbFONTS-Tajawal-Light.ttf
+          weight: 300
   assets:
     - lib/assets/logo.jpg
     - lib/assets/images/

@@ -9,10 +9,11 @@ class BooksManagementPage extends StatefulWidget {
 }
 
 class _BooksManagementPageState extends State<BooksManagementPage> {
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _authorController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _urlController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _titleController = TextEditingController();
+  final _authorController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _urlController = TextEditingController();
   bool _isLoading = false;
   String? _editingBookId;
 
@@ -26,11 +27,12 @@ class _BooksManagementPageState extends State<BooksManagementPage> {
   }
 
   void _clearForm() {
+    _formKey.currentState?.reset();
+    _titleController.clear();
+    _authorController.clear();
+    _descriptionController.clear();
+    _urlController.clear();
     setState(() {
-      _titleController.clear();
-      _authorController.clear();
-      _descriptionController.clear();
-      _urlController.clear();
       _editingBookId = null;
     });
   }
@@ -46,16 +48,9 @@ class _BooksManagementPageState extends State<BooksManagementPage> {
   }
 
   Future<void> _saveBook() async {
-    if (_titleController.text.isEmpty || _urlController.text.isEmpty) {
+    if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('الرجاء تعبئة الحقول المطلوبة')),
-      );
-      return;
-    }
-
-    if (!Uri.parse(_urlController.text).isAbsolute) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('الرجاء إدخال رابط صحيح')),
+        SnackBar(content: Text('الرجاء تعبئة جميع الحقول المطلوبة')),
       );
       return;
     }
@@ -96,24 +91,7 @@ class _BooksManagementPageState extends State<BooksManagementPage> {
     }
   }
 
-  Future<void> _launchURL(String url) async {
-    try {
-      if (await canLaunchUrlString(url)) {
-        await launchUrlString(url);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('لا يمكن فتح الرابط')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('حدث خطأ أثناء فتح الرابط')),
-      );
-    }
-  }
-
   Future<void> _deleteBook(DocumentSnapshot book, BuildContext parentContext) async {
-    // Store ScaffoldMessenger before any async operations
     final scaffoldMessenger = ScaffoldMessenger.of(parentContext);
     
     try {
@@ -126,6 +104,22 @@ class _BooksManagementPageState extends State<BooksManagementPage> {
       if (!mounted) return;
       scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('حدث خطأ أثناء حذف الكتاب')),
+      );
+    }
+  }
+
+  Future<void> _launchURL(String url) async {
+    try {
+      if (await canLaunchUrlString(url)) {
+        await launchUrlString(url);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('لا يمكن فتح الرابط')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('حدث خطأ أثناء فتح الرابط')),
       );
     }
   }
@@ -144,84 +138,98 @@ class _BooksManagementPageState extends State<BooksManagementPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                _editingBookId != null ? 'تعديل كتاب' : 'إضافة كتاب جديد',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  labelText: 'عنوان الكتاب',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                controller: _authorController,
-                decoration: InputDecoration(
-                  labelText: 'المؤلف',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                controller: _descriptionController,
-                decoration: InputDecoration(
-                  labelText: 'وصف الكتاب',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-              ),
-              SizedBox(height: 16),
-              TextField(
-                controller: _urlController,
-                decoration: InputDecoration(
-                  labelText: 'رابط الكتاب',
-                  border: OutlineInputBorder(),
-                  hintText: 'https://example.com/book.pdf',
-                ),
-              ),
-              SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _saveBook,
-                      child: _isLoading
-                          ? CircularProgressIndicator(color: Colors.white)
-                          : Text(_editingBookId != null ? 'حفظ التغييرات' : 'إضافة الكتاب'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.orange1,
-                        minimumSize: Size(double.infinity, 48),
-                      ),
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    Text(
+                      _editingBookId != null ? 'تعديل كتاب' : 'إضافة كتاب جديد',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
-                  ),
-                  if (_editingBookId != null) ...[
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _clearForm,
-                        child: Text('إلغاء التعديل'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey,
-                          minimumSize: Size(double.infinity, 48),
-                        ),
+                    SizedBox(height: 16),
+                    TextFormField(
+                      controller: _titleController,
+                      decoration: InputDecoration(
+                        labelText: 'عنوان الكتاب',
+                        border: OutlineInputBorder(),
                       ),
+                      validator: (value) =>
+                          value?.isEmpty ?? true ? 'هذا الحقل مطلوب' : null,
+                    ),
+                    SizedBox(height: 16),
+                    TextFormField(
+                      controller: _authorController,
+                      decoration: InputDecoration(
+                        labelText: 'المؤلف',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) =>
+                          value?.isEmpty ?? true ? 'هذا الحقل مطلوب' : null,
+                    ),
+                    SizedBox(height: 16),
+                    TextFormField(
+                      controller: _descriptionController,
+                      decoration: InputDecoration(
+                        labelText: 'وصف الكتاب',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                    ),
+                    SizedBox(height: 16),
+                    TextFormField(
+                      controller: _urlController,
+                      decoration: InputDecoration(
+                        labelText: 'رابط الكتاب',
+                        border: OutlineInputBorder(),
+                        hintText: 'https://example.com/book.pdf',
+                      ),
+                      validator: (value) {
+                        if (value?.isEmpty ?? true) {
+                          return 'هذا الحقل مطلوب';
+                        }
+                        if (!Uri.parse(value!).isAbsolute) {
+                          return 'الرجاء إدخال رابط صحيح';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _saveBook,
+                            child: _isLoading
+                                ? CircularProgressIndicator(color: Colors.white)
+                                : Text(_editingBookId != null ? 'حفظ التغييرات' : 'إضافة كتاب'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.orange1,
+                              minimumSize: Size(double.infinity, 48),
+                            ),
+                          ),
+                        ),
+                        if (_editingBookId != null) ...[
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _clearForm,
+                              child: Text('إلغاء التعديل'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey,
+                                minimumSize: Size(double.infinity, 48),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
-                ],
+                ),
               ),
               SizedBox(height: 32),
               Text(
-                'الكتب المضافة',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                'قائمة الكتب',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 16),
               StreamBuilder<QuerySnapshot>(
@@ -241,7 +249,19 @@ class _BooksManagementPageState extends State<BooksManagementPage> {
                   final books = snapshot.data?.docs ?? [];
 
                   if (books.isEmpty) {
-                    return Center(child: Text('لا توجد كتب مضافة'));
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.library_books, size: 64, color: Colors.grey),
+                          SizedBox(height: 16),
+                          Text(
+                            'لا توجد كتب مضافة',
+                            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                    );
                   }
 
                   return ListView.builder(
@@ -253,9 +273,24 @@ class _BooksManagementPageState extends State<BooksManagementPage> {
                       return Card(
                         margin: EdgeInsets.only(bottom: 8),
                         child: ListTile(
-                          leading: Icon(Icons.book, color: AppColors.orange1),
+                          leading: CircleAvatar(
+                            backgroundColor: AppColors.orange1.withOpacity(0.2),
+                            child: Icon(Icons.book, color: AppColors.orange1),
+                          ),
                           title: Text(book['title'] ?? ''),
-                          subtitle: Text(book['author'] ?? ''),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(book['author'] ?? ''),
+                              if (book['description']?.isNotEmpty ?? false)
+                                Text(
+                                  book['description'],
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: Colors.grey[600]),
+                                ),
+                            ],
+                          ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -295,6 +330,7 @@ class _BooksManagementPageState extends State<BooksManagementPage> {
                               ),
                             ],
                           ),
+                          isThreeLine: book['description']?.isNotEmpty ?? false,
                         ),
                       );
                     },

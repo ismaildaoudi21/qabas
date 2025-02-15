@@ -16,7 +16,10 @@ class MyApp extends StatelessWidget {
       title: 'Qabas App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        fontFamily: 'Tajawal',
+        fontFamily: 'Tajwal',
+        textTheme: Theme.of(context).textTheme.apply(
+          fontFamily: 'Tajwal',
+        ),
       ),
       home: MainLoginPage(),
     );
