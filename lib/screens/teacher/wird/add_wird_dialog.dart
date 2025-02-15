@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:qabas/utils/app_colors.dart';
+import 'package:qabas/utils/notification_helper.dart';
 
 class AddWirdDialog extends StatefulWidget {
   final String studentId;
@@ -215,6 +216,14 @@ class _AddWirdDialogState extends State<AddWirdDialog> {
           data['assignedDate'] = DateTime.now().toString();
           data['status'] = 'assigned';
           await FirebaseFirestore.instance.collection('wird').add(data);
+
+          // Create notification for new wird assignment
+          await NotificationHelper.createWirdAssignedNotification(
+            studentId: widget.studentId,
+            studentName: '', // This will be shown to the student, so we don't need it
+            wirdType: _selectedType,
+            surahName: _surahController.text,
+          );
         }
 
         Navigator.pop(context);

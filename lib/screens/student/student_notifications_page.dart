@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:qabas/utils/app_colors.dart';
+import 'package:intl/intl.dart' as intl;
 
-class TeacherNotificationsPage extends StatefulWidget {
-  final String teacherId;
+class StudentNotificationsPage extends StatelessWidget {
+  final String studentId;
 
-  const TeacherNotificationsPage({Key? key, required this.teacherId}) : super(key: key);
+  const StudentNotificationsPage({Key? key, required this.studentId}) : super(key: key);
 
-  @override
-  _TeacherNotificationsPageState createState() => _TeacherNotificationsPageState();
-}
-
-class _TeacherNotificationsPageState extends State<TeacherNotificationsPage> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -25,7 +21,7 @@ class _TeacherNotificationsPageState extends State<TeacherNotificationsPage> {
         body: StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('notifications')
-              .where('teacherId', isEqualTo: widget.teacherId)
+              .where('studentId', isEqualTo: studentId)
               .orderBy('timestamp', descending: true)
               .snapshots(),
           builder: (context, snapshot) {
@@ -64,20 +60,27 @@ class _TeacherNotificationsPageState extends State<TeacherNotificationsPage> {
                   margin: EdgeInsets.only(bottom: 8),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: AppColors.purple.withOpacity(0.2),
+                      backgroundColor: _getNotificationColor(notification['type'] ?? '').withOpacity(0.2),
                       child: Icon(
                         _getNotificationIcon(notification['type'] ?? ''),
-                        color: AppColors.purple,
+                        color: _getNotificationColor(notification['type'] ?? ''),
                       ),
                     ),
-                    title: Text(notification['title'] ?? ''),
+                    title: Text(
+                      notification['title'] ?? '',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(notification['message'] ?? ''),
+                        SizedBox(height: 4),
                         Text(
                           _formatTimestamp(notification['timestamp']),
-                          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -94,20 +97,37 @@ class _TeacherNotificationsPageState extends State<TeacherNotificationsPage> {
 
   IconData _getNotificationIcon(String type) {
     switch (type) {
-      case 'attendance':
-        return Icons.calendar_today;
-      case 'assessment':
-        return Icons.assessment;
       case 'wird':
         return Icons.menu_book;
+      case 'assessment':
+        return Icons.assessment;
+      case 'attendance':
+        return Icons.calendar_today;
+      case 'achievement':
+        return Icons.emoji_events;
       default:
         return Icons.notifications;
+    }
+  }
+
+  Color _getNotificationColor(String type) {
+    switch (type) {
+      case 'wird':
+        return AppColors.orange1;
+      case 'assessment':
+        return AppColors.blue1;
+      case 'attendance':
+        return AppColors.green1;
+      case 'achievement':
+        return AppColors.orange3;
+      default:
+        return AppColors.purple;
     }
   }
 
   String _formatTimestamp(dynamic timestamp) {
     if (timestamp == null) return '';
     final DateTime date = (timestamp as Timestamp).toDate();
-    return '${date.year}-${date.month}-${date.day} ${date.hour}:${date.minute}';
+    return intl.DateFormat('yyyy-MM-dd HH:mm').format(date);
   }
-}
+} 

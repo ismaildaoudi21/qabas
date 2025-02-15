@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:qabas/utils/app_colors.dart';
 import 'package:intl/intl.dart' as intl;
 
-class WirdHistoryTab extends StatelessWidget {
+class WirdHistoryTab extends StatefulWidget {
   final String studentId;
   final String? selectedType;
 
@@ -16,56 +16,117 @@ class WirdHistoryTab extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    Query query = FirebaseFirestore.instance
-        .collection('wird')
-        .where('studentId', isEqualTo: studentId)
-        .where('status', isEqualTo: 'completed')
-        .orderBy('completionDate', descending: true);
+  _WirdHistoryTabState createState() => _WirdHistoryTabState();
+}
 
-    if (selectedType != null) {
-      query = query.where('wirdType', isEqualTo: selectedType);
+class _WirdHistoryTabState extends State<WirdHistoryTab> {
+  static const int pageSize = 10;
+  final ScrollController _scrollController = ScrollController();
+  List<DocumentSnapshot> _wirds = [];
+  bool _isLoading = false;
+  bool _hasMore = true;
+  DocumentSnapshot? _lastDocument;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMoreWirds();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+      _loadMoreWirds();
+    }
+  }
+
+  Future<void> _loadMoreWirds() async {
+    if (!_hasMore || _isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      Query query = FirebaseFirestore.instance
+          .collection('wird')
+          .where('studentId', isEqualTo: widget.studentId)
+          .where('status', isEqualTo: 'completed')
+          .orderBy('completionDate', descending: true)
+          .limit(pageSize);
+
+      if (widget.selectedType != null) {
+        query = query.where('wirdType', isEqualTo: widget.selectedType);
+      }
+
+      if (_lastDocument != null) {
+        query = query.startAfterDocument(_lastDocument!);
+      }
+
+      final QuerySnapshot snapshot = await query.get();
+      final docs = snapshot.docs;
+
+      setState(() {
+        _wirds.addAll(docs);
+        _isLoading = false;
+        _hasMore = docs.length == pageSize;
+        if (docs.isNotEmpty) {
+          _lastDocument = docs.last;
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('حدث خطأ في تحميل السجل')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_wirds.isEmpty && !_isLoading) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.history, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'لا يوجد سجل للأوراد المكتملة',
+              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      );
     }
 
-    return StreamBuilder<QuerySnapshot>(
-      stream: query.snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) return Center(child: Text('حدث خطأ'));
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        }
-
-        final wirds = snapshot.data?.docs ?? [];
-        if (wirds.isEmpty) {
+    return ListView.builder(
+      controller: _scrollController,
+      padding: EdgeInsets.all(16),
+      itemCount: _wirds.length + (_hasMore ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index == _wirds.length) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.history, size: 64, color: Colors.grey),
-                SizedBox(height: 16),
-                Text(
-                  'لا يوجد سجل للأوراد المكتملة',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
+            child: Padding(
+              padding: EdgeInsets.all(8.0),
+              child: CircularProgressIndicator(),
             ),
           );
         }
 
-        return ListView.builder(
-          padding: EdgeInsets.all(16),
-          itemCount: wirds.length,
-          itemBuilder: (context, index) {
-            final wird = wirds[index];
-            final data = wird.data() as Map<String, dynamic>;
-            final wirdType = data['wirdType'] as String;
+        final wird = _wirds[index];
+        final data = wird.data() as Map<String, dynamic>;
+        final wirdType = data['wirdType'] as String;
 
-            return _buildHistoryCard(data, wirdType);
-          },
-        );
+        return _buildHistoryCard(data, wirdType);
       },
     );
   }

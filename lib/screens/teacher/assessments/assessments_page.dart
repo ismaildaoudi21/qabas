@@ -9,55 +9,121 @@ import 'package:intl/intl.dart' as intl;
 
 class AssessmentsPage extends StatelessWidget {
   final String teacherId;
-  final String? studentId;
-  final String? studentName;
+  final String halaqahId;
+  final String halaqahName;
 
-  AssessmentsPage({
+  const AssessmentsPage({
+    Key? key,
     required this.teacherId,
-    this.studentId,
-    this.studentName,
-  });
+    required this.halaqahId,
+    required this.halaqahName,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: DefaultTabController(
-        length: 2,
-        child: Scaffold(
-          appBar: AppBar(
-            title: Text('التقييمات'),
-            centerTitle: true,
-            backgroundColor: AppColors.orange1,
-            bottom: TabBar(
-              indicatorColor: Colors.white,
-              tabs: [
-                Tab(text: 'التقييمات الحالية'),
-                Tab(text: 'السجل'),
-              ],
-            ),
-          ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AddAssessmentPage(teacherId: teacherId),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('التقييمات'),
+          centerTitle: true,
+          backgroundColor: AppColors.orange1,
+        ),
+        body: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .where('halaqahId', isEqualTo: halaqahId)
+              .where('role', isEqualTo: 'student')
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(child: Text('حدث خطأ في تحميل البيانات'));
+            }
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+
+            final students = snapshot.data?.docs ?? [];
+
+            if (students.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.people_outline, size: 64, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text(
+                      'لا يوجد طلاب في هذه الحلقة',
+                      style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                    ),
+                  ],
                 ),
               );
-            },
-            child: Icon(Icons.add),
-            backgroundColor: AppColors.orange1,
-          ),
-          body: TabBarView(
-            children: [
-              _CurrentAssessmentsTab(teacherId: teacherId),
-              _AssessmentHistoryTab(teacherId: teacherId),
-            ],
-          ),
+            }
+
+            return ListView.builder(
+              padding: EdgeInsets.all(16),
+              itemCount: students.length,
+              itemBuilder: (context, index) {
+                final student = students[index].data() as Map<String, dynamic>;
+
+                return Card(
+                  margin: EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: AppColors.orange1.withOpacity(0.2),
+                      child: Icon(Icons.person, color: AppColors.orange1),
+                    ),
+                    title: Text(
+                      '${student['firstName']} ${student['lastName']}',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('wird_assessments')
+                          .where('studentId', isEqualTo: students[index].id)
+                          .orderBy('date', descending: true)
+                          .limit(1)
+                          .snapshots(),
+                      builder: (context, assessmentSnapshot) {
+                        if (!assessmentSnapshot.hasData || assessmentSnapshot.data!.docs.isEmpty) {
+                          return Text('لا يوجد تقييمات سابقة');
+                        }
+
+                        final latestAssessment = assessmentSnapshot.data!.docs.first.data() as Map<String, dynamic>;
+                        return Text(
+                          'آخر تقييم: ${latestAssessment['grade'] ?? 'غير محدد'}',
+                          style: TextStyle(
+                            color: _getGradeColor(latestAssessment['grade'] ?? ''),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
+            );
+          },
         ),
       ),
     );
+  }
+
+  Color _getGradeColor(String grade) {
+    switch (grade) {
+      case 'ممتاز':
+        return AppColors.blue1;
+      case 'جيد جداً':
+        return AppColors.orange1;
+      case 'جيد':
+        return AppColors.blue3;
+      case 'يكرر':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 }
 

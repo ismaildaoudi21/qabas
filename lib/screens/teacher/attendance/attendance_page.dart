@@ -4,8 +4,15 @@ import 'attendance_report_page.dart';
 
 class AttendancePage extends StatelessWidget {
   final String teacherId;
+  final String halaqahId;
+  final String halaqahName;
 
-  const AttendancePage({Key? key, required this.teacherId}) : super(key: key);
+  const AttendancePage({
+    Key? key,
+    required this.teacherId,
+    required this.halaqahId,
+    required this.halaqahName,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +33,16 @@ class AttendancePage extends StatelessWidget {
           ),
           body: TabBarView(
             children: [
-              MarkAttendancePage(teacherId: teacherId),
-              AttendanceReportPage(teacherId: teacherId),
+              MarkAttendancePage(
+                teacherId: teacherId,
+                halaqahId: halaqahId,
+                halaqahName: halaqahName,
+              ),
+              AttendanceReportPage(
+                teacherId: teacherId,
+                halaqahId: halaqahId,
+                halaqahName: halaqahName,
+              ),
             ],
           ),
         ),

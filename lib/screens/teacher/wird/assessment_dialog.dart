@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:qabas/utils/app_colors.dart';
+import 'package:qabas/utils/notification_helper.dart';
 
 class AssessmentDialog extends StatefulWidget {
   final DocumentSnapshot wird;
@@ -24,14 +25,17 @@ class _AssessmentDialogState extends State<AssessmentDialog> {
   String? selectedGrade;
   final TextEditingController _notesController = TextEditingController();
   bool _isLoading = false;
+  late final Color _typeColor;
+  late final Map<String, dynamic> _wirdData;
 
   final List<String> grades = ['ممتاز', 'جيد جداً', 'جيد', 'يكرر'];
 
   @override
   void initState() {
     super.initState();
-    final data = widget.wird.data() as Map<String, dynamic>;
-    _notesController.text = data['teacherNotes'] ?? '';
+    _wirdData = widget.wird.data() as Map<String, dynamic>;
+    _notesController.text = _wirdData['teacherNotes'] ?? '';
+    _typeColor = _getTypeColor();
   }
 
   @override
@@ -53,147 +57,129 @@ class _AssessmentDialogState extends State<AssessmentDialog> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final data = widget.wird.data() as Map<String, dynamic>;
-    final color = _getTypeColor();
+  Widget _buildGradeChips() {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: grades.map((grade) {
+        return ChoiceChip(
+          label: Text(grade),
+          selected: selectedGrade == grade,
+          selectedColor: _typeColor.withOpacity(0.2),
+          onSelected: (selected) {
+            setState(() {
+              selectedGrade = selected ? grade : null;
+            });
+          },
+        );
+      }).toList(),
+    );
+  }
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: AlertDialog(
-        title: Text('تقييم الورد'),
-        content: SingleChildScrollView(
+  Widget _buildStudentNotes() {
+    if (_wirdData['studentNotes']?.isEmpty ?? true) return SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 16),
+        Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.studentName,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-              if (widget.wirdType == 'ورد المتن')
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      data['surahName'] ?? '',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      'من ${data['startPoint'] ?? ''} إلى ${data['endPoint'] ?? ''}',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ],
-                )
-              else
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'سورة ${data['surahName']}',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      'من آية ${data['startAyah']} إلى آية ${data['endAyah']}',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ],
-                ),
-              if (data['studentNotes']?.isNotEmpty ?? false) ...[
-                SizedBox(height: 16),
-                Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey[300]!),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ملاحظات الطالب:',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[700],
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(data['studentNotes']),
-                    ],
-                  ),
-                ),
-              ],
-              SizedBox(height: 16),
-              Text(
-                'التقدير:',
+                'ملاحظات الطالب:',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: color,
+                  color: Colors.grey[700],
                 ),
               ),
-              SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: grades.map((grade) {
-                  return ChoiceChip(
-                    label: Text(grade),
-                    selected: selectedGrade == grade,
-                    selectedColor: color.withOpacity(0.2),
-                    onSelected: (selected) {
-                      setState(() {
-                        selectedGrade = selected ? grade : null;
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                controller: _notesController,
-                decoration: InputDecoration(
-                  labelText: 'ملاحظات المعلم',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-              ),
+              SizedBox(height: 4),
+              Text(_wirdData['studentNotes']),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: _isLoading ? null : () => Navigator.pop(context),
-            child: Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: _isLoading ? null : _saveAssessment,
-            child: _isLoading
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      strokeWidth: 2,
-                    ),
-                  )
-                : Text('حفظ التقييم'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: color,
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('تقييم الورد - ${widget.studentName}'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'نوع الورد: ${widget.wirdType}',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: _typeColor,
+              ),
             ),
-          ),
-        ],
+            SizedBox(height: 8),
+            Text(
+              'سورة ${_wirdData['surahName']}',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text(
+              widget.wirdType == 'ورد المتن'
+                  ? 'من ${_wirdData['startPoint']} إلى ${_wirdData['endPoint']}'
+                  : 'من آية ${_wirdData['startAyah']} إلى آية ${_wirdData['endAyah']}',
+            ),
+            _buildStudentNotes(),
+            SizedBox(height: 16),
+            Text(
+              'التقدير:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: _typeColor,
+              ),
+            ),
+            SizedBox(height: 8),
+            _buildGradeChips(),
+            SizedBox(height: 16),
+            TextField(
+              controller: _notesController,
+              decoration: InputDecoration(
+                labelText: 'ملاحظات المعلم',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
       ),
+      actions: [
+        TextButton(
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
+          child: Text('إلغاء'),
+        ),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _saveAssessment,
+          child: _isLoading
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    strokeWidth: 2,
+                  ),
+                )
+              : Text('حفظ التقييم'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _typeColor,
+          ),
+        ),
+      ],
     );
   }
 
@@ -218,13 +204,21 @@ class _AssessmentDialogState extends State<AssessmentDialog> {
         if (selectedGrade != 'يكرر') 'completionDate': FieldValue.serverTimestamp(),
       });
 
+      // Create notification for wird assessment
+      await NotificationHelper.createWirdAssessmentNotification(
+        studentId: _wirdData['studentId'],
+        studentName: widget.studentName,
+        wirdType: widget.wirdType,
+        surahName: _wirdData['surahName'],
+        grade: selectedGrade!,
+      );
+
       if (context.mounted) {
-        Navigator.pop(context, true); // Pass `true` to indicate success
+        Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('تم حفظ التقييم بنجاح')),
         );
 
-        // Call the callback to notify the parent widget
         if (widget.onAssessmentSaved != null) {
           widget.onAssessmentSaved!();
         }

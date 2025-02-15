@@ -6,15 +6,21 @@ import 'package:intl/intl.dart';
 
 class AttendanceReportPage extends StatefulWidget {
   final String teacherId;
+  final String halaqahId;
+  final String halaqahName;
 
-  const AttendanceReportPage({Key? key, required this.teacherId}) : super(key: key);
+  const AttendanceReportPage({
+    Key? key,
+    required this.teacherId,
+    required this.halaqahId,
+    required this.halaqahName,
+  }) : super(key: key);
 
   @override
   _AttendanceReportPageState createState() => _AttendanceReportPageState();
 }
 
 class _AttendanceReportPageState extends State<AttendanceReportPage> {
-  String? selectedHalaqahId;
   DateTime? startDate;
   DateTime? endDate;
 
@@ -47,7 +53,7 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
                   labelText: 'اختر الحلقة',
                   border: OutlineInputBorder(),
                 ),
-                value: selectedHalaqahId,
+                value: widget.halaqahId,
                 items: [
                   DropdownMenuItem<String>(
                     value: null,
@@ -62,9 +68,7 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
                   }).toList(),
                 ],
                 onChanged: (value) {
-                  setState(() {
-                    selectedHalaqahId = value;
-                  });
+                  // Handle halaqah selection
                 },
               );
             },
@@ -104,11 +108,11 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
           SizedBox(height: 20),
 
           // Attendance report
-          if (selectedHalaqahId != null && startDate != null && endDate != null)
+          if (widget.halaqahId != null && startDate != null && endDate != null)
             StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('attendance')
-                  .where('halaqahId', isEqualTo: selectedHalaqahId)
+                  .where('halaqahId', isEqualTo: widget.halaqahId)
                   .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate!))
                   .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate!))
                   .snapshots(),
@@ -150,7 +154,7 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
                 return FutureBuilder<QuerySnapshot>(
                   future: FirebaseFirestore.instance
                       .collection('users')
-                      .where('halaqahId', isEqualTo: selectedHalaqahId)
+                      .where('halaqahId', isEqualTo: widget.halaqahId)
                       .where('role', isEqualTo: 'student')
                       .get(),
                   builder: (context, studentsSnapshot) {
@@ -224,16 +228,7 @@ class _AttendanceReportPageState extends State<AttendanceReportPage> {
     );
     
     if (picked != null) {
-      setState(() {
-        if (isStartDate) {
-          startDate = picked;
-          if (endDate == null || endDate!.isBefore(startDate!)) {
-            endDate = picked;
-          }
-        } else {
-          endDate = picked;
-        }
-      });
+      // Handle date selection
     }
   }
 }

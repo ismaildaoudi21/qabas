@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:qabas/screens/parent/parentNotificationsPage/notifications_page.dart';
 import 'package:qabas/utils/app_colors.dart';
+import 'package:qabas/screens/parent/parentNotificationsPage/notifications_page.dart';
+import 'package:qabas/screens/parent/children/children_page.dart';
+import 'package:qabas/screens/parent/payments/payments_page.dart';
+import 'package:qabas/screens/parent/reports/reports_page.dart';
+import 'package:qabas/screens/shared/books_list_page.dart';
 
 class ParentDashboardPage extends StatelessWidget {
-  final String parentUsername;
+  final String parentId;
   final Map<String, dynamic> parentData;
 
-  ParentDashboardPage({required this.parentUsername, required this.parentData});
+  ParentDashboardPage({
+    required this.parentId,
+    required this.parentData,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +39,7 @@ class ParentDashboardPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'مرحباً، ${parentData['parentName']}',
+                'مرحباً، ${parentData['firstName']} ${parentData['lastName']}',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 20),
@@ -43,36 +50,59 @@ class ParentDashboardPage extends StatelessWidget {
                   mainAxisSpacing: 16,
                   children: [
                     _buildDashboardItem(
-                      Icons.person,
-                      'متابعة الأبناء',
+                      Icons.people,
+                      'أبنائي',
                       AppColors.blue1,
-                      () {},
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChildrenPage(parentId: parentId),
+                        ),
+                      ),
                     ),
                     _buildDashboardItem(
                       Icons.assessment,
-                      'التقييمات',
-                      Colors.green,
-                      () {},
+                      'التقارير',
+                      AppColors.green2,
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReportsPage(parentId: parentId),
+                        ),
+                      ),
                     ),
                     _buildDashboardItem(
-                      Icons.payments,
+                      Icons.payment,
                       'المدفوعات',
                       AppColors.orange1,
-                      () {},
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PaymentsPage(parentId: parentId),
+                        ),
+                      ),
                     ),
                     _buildDashboardItem(
                       Icons.notifications,
                       'الإشعارات',
-                      Colors.purple,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const ParentNotificationsPage(),
-                          ),
-                        );
-                      },
+                      AppColors.purple,
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ParentNotificationsPage(),
+                        ),
+                      ),
+                    ),
+                    _buildDashboardItem(
+                      Icons.library_books,
+                      'المكتبة',
+                      AppColors.orange1,
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BooksListPage(),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -98,8 +128,7 @@ class ParentDashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDashboardItem(
-      IconData icon, String label, Color color, VoidCallback onTap) {
+  Widget _buildDashboardItem(IconData icon, String label, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -130,5 +159,4 @@ class ParentDashboardPage extends StatelessWidget {
       ),
     );
   }
-// Same _buildLogo and _buildDashboardItem methods as StudentDashboardPage
 }

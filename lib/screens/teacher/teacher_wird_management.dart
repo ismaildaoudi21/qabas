@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart' as intl;
-import 'add_wird_dialog.dart';
+import 'wird/add_wird_dialog.dart';
 
 class TeacherWirdManagement extends StatelessWidget {
   final String studentId;

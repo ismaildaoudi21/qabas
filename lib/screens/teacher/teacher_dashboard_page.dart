@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:qabas/utils/app_colors.dart';
-import 'students/students_page.dart';
+import 'package:qabas/screens/teacher/wird/teacher_wird_management.dart';
+import 'package:qabas/screens/teacher/attendance/attendance_page.dart';
+import 'package:qabas/screens/teacher/assessments/assessments_page.dart';
+import 'package:qabas/screens/teacher/wird/teacher_wird_page.dart';
+import 'package:qabas/screens/teacher/students/students_page.dart';
+import 'package:qabas/screens/teacher/notifications/notifications_page.dart';
+import 'package:qabas/screens/teacher/halaqat/halaqat_page.dart';
+import 'package:qabas/screens/shared/books_list_page.dart';
 
 class TeacherDashboardPage extends StatelessWidget {
   final String teacherId;
@@ -11,6 +18,59 @@ class TeacherDashboardPage extends StatelessWidget {
     required this.teacherId,
     required this.teacherData,
   });
+
+  Future<DocumentSnapshot?> _getFirstHalaqah() async {
+    QuerySnapshot halaqahsSnapshot = await FirebaseFirestore.instance
+        .collection('halaqahs')
+        .where('teacherId', isEqualTo: teacherId)
+        .limit(1)
+        .get();
+
+    if (halaqahsSnapshot.docs.isNotEmpty) {
+      return halaqahsSnapshot.docs.first;
+    }
+    return null;
+  }
+
+  Future<void> _navigateToAttendance(BuildContext context) async {
+    DocumentSnapshot? halaqah = await _getFirstHalaqah();
+    if (halaqah != null && context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AttendancePage(
+            teacherId: teacherId,
+            halaqahId: halaqah.id,
+            halaqahName: (halaqah.data() as Map<String, dynamic>)['name'] ?? '',
+          ),
+        ),
+      );
+    } else if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('لا توجد حلقات مسندة إليك')),
+      );
+    }
+  }
+
+  Future<void> _navigateToAssessments(BuildContext context) async {
+    DocumentSnapshot? halaqah = await _getFirstHalaqah();
+    if (halaqah != null && context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AssessmentsPage(
+            teacherId: teacherId,
+            halaqahId: halaqah.id,
+            halaqahName: (halaqah.data() as Map<String, dynamic>)['name'] ?? '',
+          ),
+        ),
+      );
+    } else if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('لا توجد حلقات مسندة إليك')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +86,6 @@ class TeacherDashboardPage extends StatelessWidget {
             IconButton(
               icon: Icon(Icons.logout, color: Colors.black),
               onPressed: () {
-                // Add logout functionality
                 Navigator.pushReplacementNamed(context, '/');
               },
             ),
@@ -58,27 +117,23 @@ class TeacherDashboardPage extends StatelessWidget {
                       Icons.class_, 
                       'حلقاتي', 
                       Colors.blueGrey, 
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => TeacherHalaqahListPage(teacherId: teacherId),
-                          ),
-                        );
-                      }
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HalaqatPage(teacherId: teacherId),
+                        ),
+                      ),
                     ),
                     _buildDashboardItem(
                       Icons.person, 
                       'طلابي', 
                       Colors.blueAccent, 
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => TeacherStudentsListPage(teacherId: teacherId),
-                          ),
-                        );
-                      }
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => StudentsPage(teacherId: teacherId),
+                        ),
+                      ),
                     ),
                     _buildDashboardItem(
                       Icons.article, 
@@ -88,7 +143,7 @@ class TeacherDashboardPage extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => DailyQuranPage(teacherId: teacherId),
+                            builder: (context) => TeacherWirdPage(teacherId: teacherId),
                           ),
                         );
                       }
@@ -97,40 +152,35 @@ class TeacherDashboardPage extends StatelessWidget {
                       Icons.calendar_today, 
                       'الحضور والغياب', 
                       Colors.green, 
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AttendancePage(teacherId: teacherId),
-                          ),
-                        );
-                      }
+                      () => _navigateToAttendance(context),
                     ),
                     _buildDashboardItem(
                       Icons.assessment, 
                       'التقييمات', 
                       Colors.orange, 
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AssessmentsPage(teacherId: teacherId),
-                          ),
-                        );
-                      }
+                      () => _navigateToAssessments(context),
                     ),
                     _buildDashboardItem(
                       Icons.notifications, 
                       'الإشعارات', 
                       Colors.purple, 
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => NotificationsPage(teacherId: teacherId),
-                          ),
-                        );
-                      }
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TeacherNotificationsPage(teacherId: teacherId),
+                        ),
+                      ),
+                    ),
+                    _buildDashboardItem(
+                      Icons.library_books,
+                      'المكتبة',
+                      AppColors.orange1,
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BooksListPage(),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -195,47 +245,56 @@ class TeacherDashboardPage extends StatelessWidget {
       ),
     );
   }
-}
 
-// Placeholder pages - you'll need to implement these
-class TeacherHalaqahListPage extends StatelessWidget {
-  final String teacherId;
-  TeacherHalaqahListPage({required this.teacherId});
-  @override
-  Widget build(BuildContext context) => Scaffold(body: Center(child: Text('صفحة الحلقات')));
-}
+  Future<void> _navigateToWirdManagement(BuildContext context) async {
+    try {
+      // Get teacher's halaqahs
+      QuerySnapshot halaqahsSnapshot = await FirebaseFirestore.instance
+          .collection('halaqahs')
+          .where('teacherId', isEqualTo: teacherId)
+          .get();
 
-class TeacherStudentsListPage extends StatelessWidget {
-  final String teacherId;
-  TeacherStudentsListPage({required this.teacherId});
-  @override
-  Widget build(BuildContext context) => Scaffold(body: Center(child: Text('صفحة الطلاب')));
-}
+      if (halaqahsSnapshot.docs.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('لا توجد حلقات مسندة إليك')),
+        );
+        return;
+      }
 
-class DailyQuranPage extends StatelessWidget {
-  final String teacherId;
-  DailyQuranPage({required this.teacherId});
-  @override
-  Widget build(BuildContext context) => Scaffold(body: Center(child: Text('صفحة الورد اليومي')));
-}
+      List<String> halaqahIds = halaqahsSnapshot.docs.map((doc) => doc.id).toList();
 
-class AttendancePage extends StatelessWidget {
-  final String teacherId;
-  AttendancePage({required this.teacherId});
-  @override
-  Widget build(BuildContext context) => Scaffold(body: Center(child: Text('صفحة الحضور والغياب')));
-}
+      // Get students from these halaqahs
+      QuerySnapshot studentsSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('halaqahId', whereIn: halaqahIds)
+          .where('role', isEqualTo: 'student')
+          .get();
 
-class AssessmentsPage extends StatelessWidget {
-  final String teacherId;
-  AssessmentsPage({required this.teacherId});
-  @override
-  Widget build(BuildContext context) => Scaffold(body: Center(child: Text('صفحة التقييمات')));
-}
+      if (studentsSnapshot.docs.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('لا يوجد طلاب في حلقاتك')),
+        );
+        return;
+      }
 
-class NotificationsPage extends StatelessWidget {
-  final String teacherId;
-  NotificationsPage({required this.teacherId});
-  @override
-  Widget build(BuildContext context) => Scaffold(body: Center(child: Text('صفحة الإشعارات')));
+      // Navigate to DailyQuranPage
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TeacherWirdManagement(
+              studentId: studentsSnapshot.docs.first.id,
+              studentName: (studentsSnapshot.docs.first.data() as Map<String, dynamic>)['name'] ?? '',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('حدث خطأ: $e')),
+        );
+      }
+    }
+  }
 }

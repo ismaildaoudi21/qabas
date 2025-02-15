@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:qabas/utils/app_colors.dart';
-import 'package:qabas/screens/admin/students_list_page.dart';
-import 'halaqah_list_page.dart';
-import 'teacher_list_page.dart';
-import 'admin_list_page.dart';
+import 'package:qabas/screens/admin/books/books_management_page.dart';
+import 'package:qabas/screens/admin/teachers/teachers_management_page.dart';
+import 'package:qabas/screens/admin/students/students_management_page.dart';
+import 'package:qabas/screens/admin/halaqat/halaqat_management_page.dart';
 
 class AdminDashboardPage extends StatelessWidget {
   @override
@@ -16,6 +16,12 @@ class AdminDashboardPage extends StatelessWidget {
           centerTitle: true,
           backgroundColor: Colors.transparent,
           elevation: 0,
+          actions: [
+            IconButton(
+              icon: Icon(Icons.logout, color: Colors.black),
+              onPressed: () => Navigator.pushReplacementNamed(context, '/'),
+            ),
+          ],
         ),
         backgroundColor: const Color(0xFFFFFBF7),
         body: Padding(
@@ -24,42 +30,60 @@ class AdminDashboardPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'الرئيسية',
+                'مرحباً، المشرف',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 20),
               Expanded(
                 child: GridView.count(
-                  crossAxisCount: 3,
+                  crossAxisCount: 2,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                   children: [
-                    _buildDashboardItem(Icons.admin_panel_settings, 'المشرفون', Colors.red, () {
-                      Navigator.push(
-                        context, 
-                        MaterialPageRoute(builder: (context) => AdminListPage()),
-                      );
-                    }),
-                    _buildDashboardItem(Icons.book, 'الكتب', AppColors.green2, () {}),
-                    _buildDashboardItem(Icons.people, 'الحلقات', Colors.blueGrey, () {
-                      Navigator.push(
+                    _buildDashboardItem(
+                      Icons.menu_book,
+                      'إدارة الكتب',
+                      AppColors.orange1,
+                      () => Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => HalaqahListPage()),
-                      );
-                    }),
-                    _buildDashboardItem(Icons.notifications, 'الإشعارات', Colors.orange, () {}),
-                    _buildDashboardItem(Icons.person, 'الطلاب', Colors.blueAccent, () {
-                      Navigator.push(
+                        MaterialPageRoute(
+                          builder: (context) => BooksManagementPage(),
+                        ),
+                      ),
+                    ),
+                    _buildDashboardItem(
+                      Icons.people,
+                      'إدارة المعلمين',
+                      AppColors.blue1,
+                      () => Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => StudentsListPage()),
-                      );
-                    }),
-                    _buildDashboardItem(Icons.school, 'المعلمون', Colors.purple, () {
-                      Navigator.push(
+                        MaterialPageRoute(
+                          builder: (context) => TeachersManagementPage(),
+                        ),
+                      ),
+                    ),
+                    _buildDashboardItem(
+                      Icons.school,
+                      'إدارة الطلاب',
+                      AppColors.green1,
+                      () => Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => TeacherListPage()),
-                      );
-                    }),
+                        MaterialPageRoute(
+                          builder: (context) => StudentsManagementPage(),
+                        ),
+                      ),
+                    ),
+                    _buildDashboardItem(
+                      Icons.class_,
+                      'إدارة الحلقات',
+                      AppColors.purple,
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HalaqatManagementPage(),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -77,14 +101,6 @@ class AdminDashboardPage extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Center(
         child: Image.asset('lib/assets/logo.jpg', width: 40, height: 40),

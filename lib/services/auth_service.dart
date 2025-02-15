@@ -44,23 +44,43 @@ class AuthService {
         break;
 
       case 'كولي أمر':
+        print('Attempting parent login with username: $username');
         var parentQuery = await _firestore
             .collection('users')
             .where('parentUsername', isEqualTo: username)
             .where('parentPassword', isEqualTo: password)
+            .where('parentRole', isEqualTo: 'parent')
             .get();
 
+        print('Parent query results: ${parentQuery.docs.length} documents found');
         if (parentQuery.docs.isNotEmpty) {
+          final parentDoc = parentQuery.docs.first;
+          final parentData = parentDoc.data();
+          print('Parent document ID: ${parentDoc.id}');
+          print('Parent data: $parentData');
+          
+          final cleanedParentData = {
+            'id': parentDoc.id,
+            'firstName': parentData['parentName']?.split(' ').first ?? '',
+            'lastName': parentData['parentName']?.split(' ').last ?? '',
+            'email': parentData['email'],
+            'phoneNumber': parentData['phoneNumber'],
+            'username': parentData['parentUsername'],
+            'role': 'parent',
+          };
+          
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (context) => ParentDashboardPage(
-                parentUsername: username,
-                parentData: parentQuery.docs.first.data(),
+                parentId: username,
+                parentData: cleanedParentData,
               ),
             ),
           );
           return true;
+        } else {
+          print('No parent found with these credentials');
         }
         break;
 

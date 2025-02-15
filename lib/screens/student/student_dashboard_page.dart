@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:qabas/utils/app_colors.dart';
+import 'package:qabas/screens/student/student_wird_page.dart';
+import 'package:qabas/screens/student/student_assessments_page.dart';
+import 'package:qabas/screens/student/student_halaqah_page.dart';
+import 'package:qabas/screens/student/student_notifications_page.dart';
 
 class StudentDashboardPage extends StatelessWidget {
   final String studentId;
@@ -45,25 +49,47 @@ class StudentDashboardPage extends StatelessWidget {
                       Icons.menu_book,
                       'الورد اليومي',
                       AppColors.orange1,
-                      () {},
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => StudentWirdPage(studentId: studentId),
+                        ),
+                      ),
                     ),
                     _buildDashboardItem(
                       Icons.class_,
                       'حلقتي',
                       AppColors.blue1,
-                      () {},
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => StudentHalaqahPage(studentId: studentId),
+                        ),
+                      ),
                     ),
                     _buildDashboardItem(
                       Icons.assessment,
                       'تقييماتي',
                       Colors.green,
-                      () {},
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => StudentAssessmentsPage(studentId: studentId),
+                          ),
+                        );
+                      },
                     ),
                     _buildDashboardItem(
                       Icons.notifications,
                       'الإشعارات',
                       Colors.purple,
-                      () {},
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => StudentNotificationsPage(studentId: studentId),
+                        ),
+                      ),
                     ),
                   ],
                 ),

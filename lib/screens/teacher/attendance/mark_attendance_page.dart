@@ -4,8 +4,15 @@ import 'package:intl/intl.dart';
 
 class MarkAttendancePage extends StatefulWidget {
   final String teacherId;
+  final String halaqahId;
+  final String halaqahName;
 
-  const MarkAttendancePage({Key? key, required this.teacherId}) : super(key: key);
+  const MarkAttendancePage({
+    Key? key,
+    required this.teacherId,
+    required this.halaqahId,
+    required this.halaqahName,
+  }) : super(key: key);
 
   @override
   _MarkAttendancePageState createState() => _MarkAttendancePageState();

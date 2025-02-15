@@ -85,48 +85,23 @@ class _CurrentWirdTab extends StatefulWidget {
 class __CurrentWirdTabState extends State<_CurrentWirdTab> {
   @override
   Widget build(BuildContext context) {
-    Stream<QuerySnapshot> hifdStream = FirebaseFirestore.instance
+    // Combine all wird types into a single stream
+    final Stream<QuerySnapshot> combinedStream = FirebaseFirestore.instance
         .collection('wird')
         .where('studentId', isEqualTo: widget.studentId)
         .where('status', whereIn: ['assigned', 'in_progress'])
-        .where('wirdType', isEqualTo: 'ورد الحفظ')
+        .orderBy('assignedDate', descending: true)
         .snapshots();
 
-    Stream<QuerySnapshot> tilawahStream = FirebaseFirestore.instance
-        .collection('wird')
-        .where('studentId', isEqualTo: widget.studentId)
-        .where('status', whereIn: ['assigned', 'in_progress'])
-        .where('wirdType', isEqualTo: 'ورد التلاوة')
-        .snapshots();
-
-    Stream<QuerySnapshot> reviewStream = FirebaseFirestore.instance
-        .collection('wird')
-        .where('studentId', isEqualTo: widget.studentId)
-        .where('status', whereIn: ['assigned', 'in_progress'])
-        .where('wirdType', isEqualTo: 'ورد المراجعة')
-        .snapshots();
-
-    Stream<QuerySnapshot> matnStream = FirebaseFirestore.instance
-        .collection('wird')
-        .where('studentId', isEqualTo: widget.studentId)
-        .where('status', whereIn: ['assigned', 'in_progress'])
-        .where('wirdType', isEqualTo: 'ورد المتن')
-        .snapshots();
-
-    return StreamBuilder<List<QuerySnapshot>>(
-      stream: StreamZip([hifdStream, tilawahStream, reviewStream, matnStream]),
+    return StreamBuilder<QuerySnapshot>(
+      stream: combinedStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) return Center(child: Text('حدث خطأ'));
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
         }
 
-        final List<DocumentSnapshot> wirds = [];
-        if (snapshot.data != null) {
-          for (var querySnapshot in snapshot.data!) {
-            wirds.addAll(querySnapshot.docs);
-          }
-        }
+        final wirds = snapshot.data?.docs ?? [];
 
         if (wirds.isEmpty) {
           return Center(
@@ -142,6 +117,17 @@ class __CurrentWirdTabState extends State<_CurrentWirdTab> {
               ],
             ),
           );
+        }
+
+        // Group wirds by type for better organization
+        final Map<String, List<DocumentSnapshot>> wirdsByType = {};
+        for (var wird in wirds) {
+          final data = wird.data() as Map<String, dynamic>;
+          final type = data['wirdType'] as String;
+          if (!wirdsByType.containsKey(type)) {
+            wirdsByType[type] = [];
+          }
+          wirdsByType[type]!.add(wird);
         }
 
         return ListView.builder(
@@ -359,25 +345,25 @@ class __CurrentWirdTabState extends State<_CurrentWirdTab> {
     );
   }
 
-void _showAssessmentDialog(BuildContext context, DocumentSnapshot wird, String wirdType) async {
-  final result = await showDialog(
-    context: context,
-    builder: (context) => AssessmentDialog(
-      wird: wird,
-      wirdType: wirdType,
-      studentName: widget.studentName,
-      onAssessmentSaved: () {
-        // This callback will be called when the assessment is saved
-        setState(() {}); // Refresh the UI
-      },
-    ),
-  );
+  void _showAssessmentDialog(BuildContext context, DocumentSnapshot wird, String wirdType) async {
+    final result = await showDialog(
+      context: context,
+      builder: (context) => AssessmentDialog(
+        wird: wird,
+        wirdType: wirdType,
+        studentName: widget.studentName,
+        onAssessmentSaved: () {
+          // This callback will be called when the assessment is saved
+          setState(() {}); // Refresh the UI
+        },
+      ),
+    );
 
-  if (result == true) {
-    // If the assessment was saved, refresh the UI
-    setState(() {});
+    if (result == true) {
+      // If the assessment was saved, refresh the UI
+      setState(() {});
+    }
   }
-}
 
   void _showEditDialog(BuildContext context, DocumentSnapshot wird) async {
     await showDialog(
