@@ -1,7 +1,7 @@
 // teacher_wird_management.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' as intl;
 import 'add_wird_dialog.dart';
 
 class TeacherWirdManagement extends StatelessWidget {
@@ -227,7 +227,7 @@ class _WirdHistoryTab extends StatelessWidget {
                 title: Text('${data['surahName']}'),
                 subtitle: Text(
                   'من آية ${data['startAyah']} إلى آية ${data['endAyah']}\n'
-                  'تاريخ الإكمال: ${DateFormat('yyyy-MM-dd').format(data['completionDate'].toDate())}'
+                  'تاريخ الإكمال: ${intl.DateFormat('yyyy-MM-dd').format(data['completionDate'].toDate())}'
                 ),
                 leading: Icon(Icons.check_circle, color: Colors.green),
               ),

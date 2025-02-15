@@ -86,7 +86,7 @@ class _ParentNotificationsPageState extends State<ParentNotificationsPage> {
       decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withOpacity(0.3),
               offset: const Offset(0, 0), //(x, y)
               blurRadius: 6,
               spreadRadius: 0,
